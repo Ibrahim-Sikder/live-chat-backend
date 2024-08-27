@@ -2,26 +2,59 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import httpStatus from 'http-status';
+import { generateToken } from '../../../utils/GenerateToken';
 import { AppError } from '../../error/AppError';
 import { TUser } from './user.interface';
 import { User } from './user.model';
 
-const creatUser = async (payload: TUser) => {
-  // const user = await User.isUserExistsByCustomId(payload.email);
-  // console.log(user);
-  // if (user) {
-  //   throw new AppError(httpStatus.BAD_REQUEST, 'User is already exist!');
-  // }
+export const createUser = async (payload: TUser) => {
+  const { name, email, password, pic } = payload;
+  if (!name || !email || !password) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Please enter all field');
+  }
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User already exits!');
+  }
+  const user = await User.create({
+    name,
+    email,
+    password,
+    pic,
+  });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User createion failed!');
+  }
 
-  const result = await User.create(payload);
-  return result;
+  return {
+    _id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
+    pic: user.pic,
+    token: generateToken(user._id.toString()),
+  };
 };
-const getAllUser = async () => {
-  const result = await User.find();
-  return result;
+
+
+const getAllUsers = async (
+  search: string | undefined,
+  userId: string | undefined,
+): Promise<TUser[]> => {
+  const keyword = search
+    ? {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }
+    : {};
+
+  const users = await User.find(keyword).find({ _id: { $ne: userId } });
+  return users;
 };
 
 export const UserServices = {
-  creatUser,
-  getAllUser,
+  getAllUsers,
+  createUser,
 };

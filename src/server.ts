@@ -11,7 +11,7 @@ async function main() {
     await mongoose.connect(config.database_url as string);
     // seedSuperAdmin();
     server = app.listen(config.port, () => {
-      console.log(`Hotel booking server live on port ${config.port}`);
+      console.log(`Live chat server live on port ${config.port}`);
     });
   } catch (err) {
     console.log(err);

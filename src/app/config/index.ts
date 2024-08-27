@@ -19,6 +19,7 @@ export default {
     cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
     cloudinary_secret: process.env.CLOUDINARY_SECRET,
     super_admin_password:process.env.SUPER_ADMIN_PASSWORD,
+    jwt_secrete:process.env.JWT_SECRET
     
 
 
