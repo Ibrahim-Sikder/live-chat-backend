@@ -35,7 +35,23 @@ export const createUser = async (payload: TUser) => {
     token: generateToken(user._id.toString()),
   };
 };
-
+export const login = async (payload: TUser) => {
+  const { email, password } = payload;
+  const user = await User.findOne({ email });
+  if (user) {
+    return {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      pic: user.pic,
+      token: generateToken(user._id.toString()),
+    };
+  }
+  else{
+    throw new AppError(httpStatus.NOT_FOUND,'Email or password do not match')
+  }
+};
 
 const getAllUsers = async (
   search: string | undefined,
@@ -57,4 +73,5 @@ const getAllUsers = async (
 export const UserServices = {
   getAllUsers,
   createUser,
+  login,
 };

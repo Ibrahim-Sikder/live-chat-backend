@@ -1,6 +1,6 @@
 import { model, Schema } from 'mongoose';
 import { TUser } from './user.interface';
-
+import bcrypt from 'bcryptjs'
 const userSchema = new Schema<TUser>(
   
     {
@@ -18,5 +18,17 @@ const userSchema = new Schema<TUser>(
       timestamps: true, 
     }
 );
+
+userSchema.methods.matchPassword = async function (enteredPassword:string) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified) {
+    next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
 
 export const User = model<TUser>('User', userSchema);
