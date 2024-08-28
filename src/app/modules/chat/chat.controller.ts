@@ -38,19 +38,22 @@ const fetchChats = async (req: Request, res: Response) => {
   });
 };
 
-const getSingleChat = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const createGroupChat = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-    const result = await chatServices.getSingleChat(id);
+    const { name, users } = req.body;
+
+    if (!name || !users) {
+      return res.status(httpStatus.BAD_REQUEST).send({ message: 'Please fill all the fields' });
+    }
+
+    const parsedUsers = JSON.parse(users);
+
+    const result = await chatServices.createGroupChat(name, parsedUsers, req.user?._id);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: 'Chat retrieved successfully',
+      message: 'Group chat created successfully',
       data: result,
     });
   } catch (err) {
@@ -93,7 +96,7 @@ const deleteChat = async (req: Request, res: Response, next: NextFunction) => {
 export const chatControllers = {
   accessChat,
   fetchChats,
-  getSingleChat,
+  createGroupChat,
   updateChat,
   deleteChat,
 };

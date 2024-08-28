@@ -7,7 +7,6 @@ import { User } from '../user/user.model';
 import { TChat } from './chat.interface';
 import { Chat } from './chat.model';
 
-type PopulatedChatType = Document<unknown, {}, TChat> & TChat & { _id: Types.ObjectId };
 
 export const accessChat = async (userId: string, currentUserId: string) => {
   if (!userId) {
@@ -21,7 +20,7 @@ export const accessChat = async (userId: string, currentUserId: string) => {
       { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate('users', '-password')
+    .populate('users')
     .populate('latestMessage');
 
   // Populate the sender of the latest message if it exists
@@ -40,10 +39,12 @@ export const accessChat = async (userId: string, currentUserId: string) => {
     };
 
     const createdChat = await Chat.create(chatData);
-    const fullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-      'users',
-      '-password'
-    );
+    
+    // Find the chat and populate the users field
+    const fullChat = await Chat.findOne({ _id: createdChat._id })
+      .populate('users', '-password')
+      .populate('latestMessage');
+
     return fullChat;
   }
 };
@@ -53,10 +54,15 @@ const fetchChats = async (userId: Types.ObjectId): Promise<TChat[]> => {
     console.log('Querying chats for user:', userId);
 
     let chats = await Chat.find({ users: { $elemMatch: { $eq: userId } } })
-      .populate('users', '-password')
+      .populate('users')
       .populate('groupAdmin', '-password')
       .populate('latestMessage')
-      .sort({ updatedAt: -1 }) as TChat[]; 
+      .sort({ updatedAt: -1 }) as TChat[];
+
+    if (chats.length === 0) {
+      console.log('No chats found for user:', userId);
+      return chats;
+    }
 
     console.log('Chats queried, populating latest message sender...');
     chats = await User.populate(chats, {
@@ -64,7 +70,7 @@ const fetchChats = async (userId: Types.ObjectId): Promise<TChat[]> => {
       select: 'name pic email',
     }) as unknown as TChat[];
 
-    console.log('Chats successfully fetched and populated');
+    console.log('Chats successfully fetched and populated:', chats);
     return chats;
   } catch (error: any) {
     console.error('Error fetching chats:', error);
@@ -73,9 +79,26 @@ const fetchChats = async (userId: Types.ObjectId): Promise<TChat[]> => {
 };
 
 
-const getSingleChat = async (id: string) => {
-  const result = await Chat.findById(id).populate("users", "-password").populate("groupAdmin", "-password").populate("latestMessage");
-  return result;
+
+const createGroupChat = async (name: string, users: string[], currentUserId: Types.ObjectId) => {
+  if (!name || users.length < 2) {
+    throw new Error('Group chat requires a name and at least 2 users');
+  }
+
+  users.push(currentUserId?.toString());
+
+  const groupChat = await Chat.create({
+    chatName: name,
+    users,
+    isGroupChat: true,
+    groupAdmin: currentUserId,
+  });
+
+  const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
+    .populate('users', '-password')
+    .populate('groupAdmin', '-password');
+
+  return fullGroupChat;
 };
 
 const updateChat = async (id: string, payload: Partial<TChat>) => {
@@ -94,7 +117,7 @@ const deleteChat = async (id: string) => {
 export const chatServices = {
   accessChat,
   fetchChats,
-  getSingleChat,
+  createGroupChat,
   updateChat,
   deleteChat,
 };

@@ -13,7 +13,7 @@ router.post('/',validateRequest(chatValidations.ChatSchema),
 
 router.get('/', protect, chatControllers.fetchChats);
 
-router.get('/:id', chatControllers.getSingleChat);
+router.post('/group', chatControllers.createGroupChat);
 router.delete('/:id', chatControllers.deleteChat);
 router.patch('/:id',chatControllers.updateChat);
 
