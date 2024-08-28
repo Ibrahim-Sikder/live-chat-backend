@@ -10,14 +10,14 @@ export const accessChat = async (
 ) => {
   try {
     const { userId } = req.body;
-    const currentUserId = req.user?._id; // Assuming req.user is set by authentication middleware
 
-    const result = await chatServices.accessChat(userId, currentUserId);
+    // Assuming req.user is populated with the authenticated user's details
+    const result = await chatServices.accessChat(userId, req.user?._id);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: 'Chat accessed created successfully',
+      message: 'Chat accessed or created successfully',
       data: result,
     });
   } catch (err) {

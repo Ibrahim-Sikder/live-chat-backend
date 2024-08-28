@@ -9,45 +9,41 @@ import { Chat } from './chat.model';
 
 type PopulatedChatType = Document<unknown, {}, TChat> & TChat & { _id: Types.ObjectId };
 
-const accessChat = async (userId: string, currentUserId: string): Promise<PopulatedChatType | null> => {
+export const accessChat = async (userId: string, currentUserId: string) => {
   if (!userId) {
-    throw new Error("UserId param not sent with request");
+    throw new Error('UserId param not sent with request');
   }
 
-  // Convert string IDs to ObjectId and cast them explicitly
-  const userObjectId = new mongoose.Types.ObjectId(userId) as Types.ObjectId;
-  const currentUserObjectId = new mongoose.Types.ObjectId(currentUserId) as Types.ObjectId;
-
-  // Find if the chat already exists
   let isChat = await Chat.find({
     isGroupChat: false,
     $and: [
-      { users: { $elemMatch: { $eq: currentUserObjectId } } },
-      { users: { $elemMatch: { $eq: userObjectId } } },
+      { users: { $elemMatch: { $eq: currentUserId } } },
+      { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate("users", "-password")
-    .populate("latestMessage") as PopulatedChatType[]; // Assert the type
+    .populate('users', '-password')
+    .populate('latestMessage');
 
+  // Populate the sender of the latest message if it exists
   isChat = await User.populate(isChat, {
-    path: "latestMessage.sender",
-    select: "name pic email",
-  }) as unknown as PopulatedChatType[]; // Assert the type again after populating
+    path: 'latestMessage.sender',
+    select: 'name pic email',
+  });
 
   if (isChat.length > 0) {
     return isChat[0];
   } else {
-    // Create a new chat if it doesn't exist
-    const chatData: Partial<TChat> = {
-      chatName: "sender",
+    const chatData = {
+      chatName: 'sender',
       isGroupChat: false,
-      users: [currentUserObjectId, userObjectId],
+      users: [currentUserId, userId],
     };
 
     const createdChat = await Chat.create(chatData);
-    const fullChat = await Chat.findOne({ _id: createdChat._id })
-      .populate("users", "-password") as PopulatedChatType | null;
-
+    const fullChat = await Chat.findOne({ _id: createdChat._id }).populate(
+      'users',
+      '-password'
+    );
     return fullChat;
   }
 };
