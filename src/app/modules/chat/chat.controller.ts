@@ -38,17 +38,27 @@ const fetchChats = async (req: Request, res: Response) => {
   });
 };
 
-export const createGroupChat = async (req: Request, res: Response, next: NextFunction) => {
+export const createGroupChat = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { name, users } = req.body;
 
     if (!name || !users) {
-      return res.status(httpStatus.BAD_REQUEST).send({ message: 'Please fill all the fields' });
+      return res
+        .status(httpStatus.BAD_REQUEST)
+        .send({ message: 'Please fill all the fields' });
     }
 
     const parsedUsers = JSON.parse(users);
 
-    const result = await chatServices.createGroupChat(name, parsedUsers, req.user?._id);
+    const result = await chatServices.createGroupChat(
+      name,
+      parsedUsers,
+      req.user?._id,
+    );
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
@@ -61,15 +71,20 @@ export const createGroupChat = async (req: Request, res: Response, next: NextFun
   }
 };
 
-const updateChat = async (req: Request, res: Response, next: NextFunction) => {
+const renameGroupChat = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const { id } = req.params;
-    const result = await chatServices.updateChat(id, req.body);
+    const { chatId, chatName } = req.body;
+
+    const result = await chatServices.renameGroupChat(chatId, chatName);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: 'Chat updated successfully',
+      message: 'Group chat renamed successfully',
       data: result,
     });
   } catch (err) {
@@ -77,15 +92,41 @@ const updateChat = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const deleteChat = async (req: Request, res: Response, next: NextFunction) => {
+export const addToGroup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const { id } = req.params;
-    const result = await chatServices.deleteChat(id);
+    const { chatId, userId } = req.body;
+
+    const result = await chatServices.addToGroup(chatId, userId);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: 'Chat deleted successfully',
+      message: 'User added to group successfully',
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const removeFromGroup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { chatId, userId } = req.body;
+
+    const result = await chatServices.removeFromGroup(chatId, userId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User removed from group successfully',
       data: result,
     });
   } catch (err) {
@@ -97,6 +138,7 @@ export const chatControllers = {
   accessChat,
   fetchChats,
   createGroupChat,
-  updateChat,
-  deleteChat,
+  renameGroupChat,
+  addToGroup,
+  removeFromGroup,
 };
