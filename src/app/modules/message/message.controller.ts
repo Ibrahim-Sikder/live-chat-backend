@@ -5,14 +5,10 @@ import { messageServices } from './message.service';
 
 export const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Extract data from the request
     const { content, chatId } = req.body;
     const senderId = req.user?._id;
 
-    // Call the service to create the message
     const result = await messageServices.createMessage({ content, chatId, senderId });
-
-    // Send the response
     sendResponse(res, {
       statusCode: httpStatus.CREATED,
       success: true,
@@ -24,8 +20,24 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const allMessages = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const chatId = req.params.chatId;
 
+    const messages = await messageServices.getAllMessages(chatId);
+
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Messages retrieved successfully',
+      data: messages,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 export const messageControllers = {
   sendMessage,
-
+  allMessages
 };

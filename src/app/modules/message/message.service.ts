@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Chat } from '../chat/chat.model';
 import { User } from '../user/user.model';
@@ -19,7 +20,6 @@ export const createMessage = async (data: { content: string; chatId: string; sen
 
   let message = await Message.create(newMessage);
 
-  // Populate fields
   message = await message.populate("sender", "name pic")
   message = await message.populate("chat")
   message = await User.populate(message, {
@@ -31,7 +31,30 @@ export const createMessage = async (data: { content: string; chatId: string; sen
 
   return message;
 };
+
+export const getAllMessages = async (chatId: string): Promise<TMessage[]> => {
+  try {
+    const messages = await Message.find({ chat: chatId })
+      .populate("sender", "name pic email")
+      .populate({
+        path:'chat',
+        populate:{
+          path:'latestMessage',
+          populate:{
+            path:'sender',
+            select:'name pic email'
+          }
+        }
+      });
+    
+    return messages;
+  } catch (error:any) {
+    throw new Error(error.message);
+  }
+};
+
 export const messageServices = {
   createMessage,
+  getAllMessages
 
 };

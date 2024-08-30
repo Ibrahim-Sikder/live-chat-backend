@@ -36,7 +36,7 @@ const getAllHotel = async (req: Request, res: Response, next: NextFunction) => {
 
 export const countByCity = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('Request Received:', req.method, req.url);
+
     const { city } = req.query;
     
     if (!city) {
@@ -44,7 +44,7 @@ export const countByCity = async (req: Request, res: Response, next: NextFunctio
     }
 
     const result = await hotelServices.countByCity({ cities: city as string });
-    console.log('Count Result:', result);
+
     
     sendResponse(res, {
       statusCode: httpStatus.OK,

@@ -50,7 +50,7 @@ export const accessChat = async (userId: string, currentUserId: string) => {
 
 const fetchChats = async (userId: Types.ObjectId): Promise<TChat[]> => {
   try {
-    console.log('Querying chats for user:', userId);
+ 
 
     let chats = (await Chat.find({ users: { $elemMatch: { $eq: userId } } })
       .populate('users')
@@ -59,17 +59,16 @@ const fetchChats = async (userId: Types.ObjectId): Promise<TChat[]> => {
       .sort({ updatedAt: -1 })) as TChat[];
 
     if (chats.length === 0) {
-      console.log('No chats found for user:', userId);
+    
       return chats;
     }
 
-    console.log('Chats queried, populating latest message sender...');
+
     chats = (await User.populate(chats, {
       path: 'latestMessage.sender',
       select: 'name pic email',
     })) as unknown as TChat[];
 
-    console.log('Chats successfully fetched and populated:', chats);
     return chats;
   } catch (error: any) {
     console.error('Error fetching chats:', error);

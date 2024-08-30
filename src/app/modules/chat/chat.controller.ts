@@ -29,7 +29,7 @@ const fetchChats = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const result = await chatServices.fetchChats(userId);
 
-  console.log('Chats fetched successfully');
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
