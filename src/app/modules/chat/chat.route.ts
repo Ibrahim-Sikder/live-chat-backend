@@ -12,10 +12,10 @@ router.post(
   chatControllers.accessChat,
 );
 
-router.get('/', protect, chatControllers.fetchChats);
+router.get('/', chatControllers.fetchChats);
 
 router.post('/group', chatControllers.createGroupChat);
-router.put('/groupadd', protect, chatControllers.addToGroup);
+router.put('/groupadd',  chatControllers.addToGroup);
 router.patch('/rename', chatControllers.renameGroupChat);
-router.put('/groupremove', protect, chatControllers.removeFromGroup);
+router.put('/groupremove',  chatControllers.removeFromGroup);
 export const chatRoutes = router;

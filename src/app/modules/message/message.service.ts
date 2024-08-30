@@ -1,48 +1,37 @@
 
+import { Chat } from '../chat/chat.model';
+import { User } from '../user/user.model';
 import { TMessage } from './message.interface';
 import { Message } from './message.model';
 
-const createMessage = async (payload: TMessage) => {
-  const result = await Message.create(payload);
-  return result;
-};
+export const createMessage = async (data: { content: string; chatId: string; senderId: string }): Promise<TMessage> => {
+  const { content, chatId, senderId } = data;
 
-const getAllMessagesByChatId = async (chatId: string) => {
-  const result = await Message.find({ chat: chatId })
-    .populate('sender', 'name email') // Populating sender's name and email
-    .populate('chat')
-    .populate('readBy', 'name email'); // Populating readers' name and email
-  return result;
-};
+  if (!content || !chatId) {
+    throw new Error("Invalid data passed into request");
+  }
 
-const getSingleMessage = async (id: string) => {
-  const result = await Message.findById(id)
-    .populate('sender', 'name email')
-    .populate('chat')
-    .populate('readBy', 'name email');
-  return result;
-};
+  const newMessage = {
+    sender: senderId,
+    content,
+    chat: chatId,
+  };
 
-const updateMessage = async (id: string, payload: Partial<TMessage>) => {
-  const result = await Message.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  })
-    .populate('sender', 'name email')
-    .populate('chat')
-    .populate('readBy', 'name email');
-  return result;
-};
+  let message = await Message.create(newMessage);
 
-const deleteMessage = async (id: string) => {
-  const result = await Message.findByIdAndDelete(id);
-  return result;
-};
+  // Populate fields
+  message = await message.populate("sender", "name pic")
+  message = await message.populate("chat")
+  message = await User.populate(message, {
+    path: "chat.users",
+    select: "name pic email",
+  });
 
+  await Chat.findByIdAndUpdate(chatId, { latestMessage: message });
+
+  return message;
+};
 export const messageServices = {
   createMessage,
-  getAllMessagesByChatId,
-  getSingleMessage,
-  updateMessage,
-  deleteMessage,
+
 };
