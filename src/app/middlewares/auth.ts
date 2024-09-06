@@ -17,14 +17,12 @@ export const protect = asyncHandler(async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      console.log(token);
-      // Decodes token and casts it to the custom payload type
+
       const decoded = jwt.verify(
         token,
         config.jwt_access_secret as string,
       ) as CustomJwtPayload;
-      console.log(decoded.id);
-
+ 
       req.user = await User.findById(decoded.id).select('-password');
 
       next();
