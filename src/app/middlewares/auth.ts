@@ -1,8 +1,7 @@
 import jwt from 'jsonwebtoken'
 import asyncHandler from 'express-async-handler'
-import config from '../config';
 import { User } from '../modules/user/user.model';
-
+import config from '../config';
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -15,7 +14,7 @@ export const protect = asyncHandler(async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
    
       //decodes token id
-      const decoded = jwt.verify(token, config.jwt_secrete as string);
+      const decoded = jwt.verify(token, config.jwt_access_secret as string);
 
       req.user = await User.findById(decoded.id).select("-password");
 

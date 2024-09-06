@@ -1,34 +1,75 @@
-import { model, Schema } from 'mongoose';
-import { TUser } from './user.interface';
-import bcrypt from 'bcryptjs'
-const userSchema = new Schema<TUser>(
+/* eslint-disable no-unused-vars */
+import { Schema, model } from "mongoose";
+import { TUser, UserModel } from "./user.interface";
+
+const userSchema = new Schema<TUser, UserModel>({
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  confirmPassword: {
+    type: String,
+    required: true,
+  },
+  phone: {
+    type: String,
+
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin', 'super_admin'],
+    default: 'user',
+  },
+  status: {
+    type: String,
+    enum: ['active', 'block'],
+    default: 'active',
+  },
+  address: {
+    type: String,
   
-    {
-      name: { type: String, required: true },
-      email: { type: String, required: true, unique: true },
-      password: { type: String, required: true },
-      pic: {
-        type: String,
-        required: true,
-        default: 'https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg', 
-      },
-      isAdmin: { type: Boolean, required: true, default: false },
-    },
-    {
-      timestamps: true, 
-    }
-);
-
-userSchema.methods.matchPassword = async function (enteredPassword:string) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-userSchema.pre("save", async function (next) {
-  if (!this.isModified) {
-    next();
-  }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  },
+  profile: {
+    type: String,
+    
+  },
+  otp: {
+    type: String,
+  },
+  expiredOtpDate: {
+    type: Date,
+  },
+  isVerifyed: {
+    type: Boolean,
+    default: false,
+  },
+  isCompleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-export const User = model<TUser>('User', userSchema);
+
+userSchema.statics.isUserExistByCustomId = async function (id: string) {
+  return await this.findOne({ _id: id }); 
+};
+
+// You can also add additional static methods or instance methods if needed
+userSchema.statics.findByEmail = async function (email: string) {
+  return await this.findOne({ email });
+};
+
+export const User = model<TUser, UserModel>('User', userSchema);

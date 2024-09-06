@@ -1,33 +1,38 @@
 import httpStatus from 'http-status';
+
+import { UserService } from './user.service';
+import config from '../../config';
 import { catchAsync } from '../../../utils/catchAsync';
 import sendResponse from '../../../utils/sendResponse';
-import { UserServices } from './user.service';
 
-
-const createUser = catchAsync(async (req, res) => {
-
-  const result = await UserServices.createUser(req.body);
-
+const userRegister = catchAsync(async (req, res) => {
+  const result = await UserService.userRegister(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Users create successfully',
+    message: 'User register successfully!',
     data: result,
   });
 });
-const login = catchAsync(async (req, res) => {
+const userLogin = catchAsync(async (req, res) => {
+  const result = await UserService.userLogin(req.body);
+  const { accessToken, refreshToken } = result;
 
-  const result = await UserServices.login(req.body);
-
+  res.cookie('refreshToken', refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+  });
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Users login successfully',
-    data: result,
+    message: 'User login successfully!',
+    data: {
+      accessToken,
+    },
   });
 });
 const getAllUser = catchAsync(async (req, res) => {
-  const result = await UserServices.getAllUsers(req.query.search as string | undefined, req.user?._id);
+  const result = await UserService.getAllUsers(req.query.search as string | undefined, req.user?._id);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -37,8 +42,32 @@ const getAllUser = catchAsync(async (req, res) => {
   });
 });
 
+
+const changePassword = catchAsync(async (req, res) => {
+  const result = await UserService.changePassword(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Password changed successfully!',
+    data: result,
+  });
+});
+const refreshToken = catchAsync(async (req, res) => {
+  console.log(req.cookies);
+  const { refreshToken } = req.cookies;
+  const result = await UserService.refreshToken(refreshToken);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Access token is retrieved successfully!',
+    data: result,
+  });
+});
+
 export const UserController = {
-  createUser,
-  getAllUser,
-  login
+  userRegister,
+  userLogin,
+  changePassword,
+  refreshToken,
+  getAllUser
 };

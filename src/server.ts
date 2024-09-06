@@ -61,7 +61,7 @@ async function main() {
 
     // Start the server
     server.listen(config.port, () => {
-      console.log(`Live chat server running on port ${config.port}`);
+      console.log(`Techzon server running  ${config.port}`);
     });
   } catch (err) {
     console.log(err);

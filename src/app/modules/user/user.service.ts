@@ -1,56 +1,74 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import httpStatus from 'http-status';
-import { generateToken } from '../../../utils/GenerateToken';
 import { AppError } from '../../error/AppError';
 import { TUser } from './user.interface';
 import { User } from './user.model';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import config from '../../config';
+import { createToken } from './user.utils';
 
-export const createUser = async (payload: TUser) => {
-  const { name, email, password, pic } = payload;
-  if (!name || !email || !password) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Please enter all field');
+const userRegister = async (payload: TUser) => {
+
+  const existingUser = await User.findOne({ email: payload.email });
+  if (existingUser) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+     'Email already exists.',
+    );
   }
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User already exits!');
-  }
-  const user = await User.create({
-    name,
-    email,
-    password,
-    pic,
+
+  const newUser = await User.create({
+    ...payload,
   });
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User createion failed!');
+  const jwtPayload = {
+    auth: newUser._id.toString(), 
+    role: newUser.role,
+    isVerified: newUser.isVerifyed,
+    email: newUser.email,
   }
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
+  );
 
   return {
-    _id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    isAdmin: user.isAdmin,
-    pic: user.pic,
-    token: generateToken(user._id.toString()),
+    _id:newUser.id.toString(),
+    email: newUser.email,
+    name: newUser.firstName + newUser.lastName,
+    role: newUser.role,
+    token: accessToken,
   };
 };
-export const login = async (payload: TUser) => {
-  const { email, password } = payload;
-  const user = await User.findOne({ email });
-  if (user) {
-    return {
-      _id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      pic: user.pic,
-      token: generateToken(user._id.toString()),
-    };
+const userLogin = async (payload: any) => {
+  const user = await User.findOne({
+    email: payload?.email,
+    password: payload?.password,
+  });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
-  else{
-    throw new AppError(httpStatus.NOT_FOUND,'Email or password do not match')
-  }
+
+  const jwtPayload = {
+    auth: user._id.toString(), 
+    role: user.role,
+    isVerified: user.isVerifyed,
+    email: user.email,
+  };
+  
+
+  const accessToken = jwt.sign(jwtPayload, config.jwt_access_secret as string, {
+    expiresIn: config.jwt_access_expires_in,
+  });
+  const refreshToken = jwt.sign(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    {
+      expiresIn: config.jwt_refresh_expires_in,
+    },
+  );
+
+  return { accessToken, refreshToken };
 };
 
 const getAllUsers = async (
@@ -70,8 +88,40 @@ const getAllUsers = async (
   return users;
 };
 
-export const UserServices = {
-  getAllUsers,
-  createUser,
-  login,
+
+
+const changePassword = async (payload: {
+  oldPassword: string;
+  newPassword: string;
+}) => {
+  const user = await User.findOne();
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  if (user.password !== payload.oldPassword) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Password do not matched!');
+  }
+
+  const result = User.findOneAndUpdate({
+    password: payload?.newPassword,
+  });
+  return result;
+};
+const refreshToken = async (token: string) => {
+  const decoded = jwt.verify(
+    token,
+    config.jwt_refresh_secret as string,
+  ) as JwtPayload;
+  console.log(decoded);
+
+  const { userId, iat } = decoded;
+  console.log(userId, iat);
+};
+
+export const UserService = {
+  userRegister,
+  userLogin,
+  changePassword,
+  refreshToken,
+  getAllUsers
 };
