@@ -3,11 +3,7 @@ import { Schema, model } from "mongoose";
 import { TUser, UserModel } from "./user.interface";
 
 const userSchema = new Schema<TUser, UserModel>({
-  firstName: {
-    type: String,
-    required: true,
-  },
-  lastName: {
+  name: {
     type: String,
     required: true,
   },
@@ -25,7 +21,7 @@ const userSchema = new Schema<TUser, UserModel>({
     required: true,
   },
   phone: {
-    type: String,
+    type: Number,
 
   },
   role: {
@@ -57,6 +53,10 @@ const userSchema = new Schema<TUser, UserModel>({
     default: false,
   },
   isCompleted: {
+    type: Boolean,
+    default: false,
+  },
+  isDeleted: {
     type: Boolean,
     default: false,
   },

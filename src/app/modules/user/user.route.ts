@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import express from 'express';
 import { UserController } from './user.controller';
 import { UserValidations } from './user.validation';
 import { validateRequest } from '../../../utils/validateRequest';
-import { protect } from '../../middlewares/auth';
+import { auth } from '../../middlewares/auth';
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ router.post(
   UserController.userRegister,
 );
 
-router.get('/',protect, UserController.getAllUser);
+router.get('/',auth('admin'), UserController.getAllUser);
 router.post(
   '/login',
   validateRequest(UserValidations.userLoginValidationSchema),

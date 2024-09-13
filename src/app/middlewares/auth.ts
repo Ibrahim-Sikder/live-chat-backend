@@ -1,37 +1,53 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+
+import { NextFunction, Request, Response } from 'express';
+
+import httpStatus from 'http-status';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import asyncHandler from 'express-async-handler';
-import { User } from '../modules/user/user.model';
+import { catchAsync } from '../../utils/catchAsync';
+import { AppError } from '../error/AppError';
 import config from '../config';
+import { User } from '../modules/user/user.model';
+import { TUserRole } from '../modules/user/user.interface';
 
-// Extend the JwtPayload type to include `id` if it's part of your payload
-interface CustomJwtPayload extends JwtPayload {
-  id: string;
-}
-
-export const protect = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-
-      const decoded = jwt.verify(
-        token,
-        config.jwt_access_secret as string,
-      ) as CustomJwtPayload;
- 
-      req.user = await User.findById(decoded.id).select('-password');
-
-      next();
-    } catch (error) {
-      res.status(401);
-      throw new Error('Not authorized, token failed');
+export const auth = (...requiredRoles: TUserRole[]) => {
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.headers.authorization;
+    if (!token) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        'You are not authorized! Please login to get access',
+      );
     }
-  } else {
-    res.status(401);
-    throw new Error('Not authorized, no token');
-  }
-});
+
+    const decoded = jwt.verify(
+      token,
+      config.jwt_access_secret as string,
+    ) as JwtPayload;
+    console.log(decoded);
+
+    const { role, auth, iat } = decoded;
+
+    const user = await User.findOne({ _id: auth });
+
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found ');
+    }
+
+    const isDeleted = user?.isDeleted;
+    if (isDeleted) {
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is deleted!');
+    }
+
+    if (requiredRoles && !requiredRoles.includes(role)) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        'Your are not authorized user!',
+      );
+    }
+
+    req.user = decoded as JwtPayload;
+    next();
+  });
+};

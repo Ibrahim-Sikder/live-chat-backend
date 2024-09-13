@@ -8,24 +8,21 @@ import config from '../../config';
 import { createToken } from './user.utils';
 
 const userRegister = async (payload: TUser) => {
-
   const existingUser = await User.findOne({ email: payload.email });
   if (existingUser) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-     'Email already exists.',
-    );
+    throw new AppError(httpStatus.BAD_REQUEST, 'Email already exists.');
   }
 
   const newUser = await User.create({
     ...payload,
   });
   const jwtPayload = {
-    auth: newUser._id.toString(), 
+    auth: newUser._id.toString(),
     role: newUser.role,
+    name: newUser.name,
     isVerified: newUser.isVerifyed,
     email: newUser.email,
-  }
+  };
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
@@ -33,9 +30,9 @@ const userRegister = async (payload: TUser) => {
   );
 
   return {
-    _id:newUser.id.toString(),
+    _id: newUser.id.toString(),
     email: newUser.email,
-    name: newUser.firstName + newUser.lastName,
+    name: newUser.name,
     role: newUser.role,
     token: accessToken,
   };
@@ -50,12 +47,13 @@ const userLogin = async (payload: any) => {
   }
 
   const jwtPayload = {
-    auth: user._id.toString(), 
+    userId: user._id.toString(),
     role: user.role,
+    name: user.name,
     isVerified: user.isVerifyed,
     email: user.email,
+
   };
-  
 
   const accessToken = jwt.sign(jwtPayload, config.jwt_access_secret as string, {
     expiresIn: config.jwt_access_expires_in,
@@ -68,7 +66,17 @@ const userLogin = async (payload: any) => {
     },
   );
 
-  return { accessToken, refreshToken };
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      name:user.name,
+      token: accessToken,
+    },
+  };
 };
 
 const getAllUsers = async (
@@ -87,8 +95,6 @@ const getAllUsers = async (
   const users = await User.find(keyword).find({ _id: { $ne: userId } });
   return users;
 };
-
-
 
 const changePassword = async (payload: {
   oldPassword: string;
@@ -123,5 +129,5 @@ export const UserService = {
   userLogin,
   changePassword,
   refreshToken,
-  getAllUsers
+  getAllUsers,
 };
