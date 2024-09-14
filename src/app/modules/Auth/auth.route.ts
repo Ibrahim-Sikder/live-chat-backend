@@ -12,10 +12,15 @@ router.post(
   AuthController.loginUser,
 );
 router.post(
+  '/verify',
+  AuthController.verifyOtp,
+);
+router.post(
   '/register',
   validateRequest(UserValidations.createUserValidationSchema),
   AuthController.register,
 );
+
 
 
 

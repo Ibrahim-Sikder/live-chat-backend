@@ -6,19 +6,21 @@ export type TUser = {
   name: string;
   email: string;
   password: string;
-  phone:number,
-  confirmPassword:string,
-  role:'user' | 'admin' | 'super_admin',
-  status: 'active' | 'block',
-  address:string,
-  profile:string,
-  otp:string,
-  expiredOtpDate:Date,
-  isVerifyed:boolean,
-  isCompleted:boolean,
-  isDeleted: boolean,
-
+  phone: string;
+  confirmPassword: string;
+  role: 'user' | 'admin' | 'super_admin';
+  status: 'active' | 'block';
+  address: string;
+  profile: string;
+  otp: string | null; 
+  expiredOtpDate: Date | null;
+  isVerified: boolean;
+  isCompleted: boolean;
+  isDeleted: boolean;
+  isPasswordMatched(enteredPassword: string): Promise<boolean>;
 };
+
+
 
 
 export interface UserModel extends Model<TUser> {
@@ -32,5 +34,6 @@ export interface UserModel extends Model<TUser> {
     passwordChangedTimestamp: Date,
     jwtIssuedTimestamp: number,
   ): boolean;
+  isUserExistByCustomId(id: string): Promise<TUser | null>;
 }
 export type TUserRole = keyof typeof USER_ROLE;

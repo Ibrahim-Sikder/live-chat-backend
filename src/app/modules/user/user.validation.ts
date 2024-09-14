@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const createUserValidationSchema = z.object({
   body: z.object({
-    name: z.string({ required_error: 'Last name is required' }),
+    name: z.string({ required_error: 'Name is required' }),
     email: z
       .string({ required_error: 'Email is required' })
       .email({ message: 'Invalid email address' }),
@@ -16,7 +16,7 @@ const createUserValidationSchema = z.object({
     expiredOtpDate: z.string().optional(),
     isVerifyed: z.boolean().optional(),
     isCompleted: z.boolean().optional(),
-    phone:z.number().optional()
+    phone:z.string().optional()
   }).refine((data) => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
     message: 'Passwords do not match',

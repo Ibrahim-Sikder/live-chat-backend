@@ -9,7 +9,7 @@ const loginUser = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'User login successfully!',
+    message: 'OTP Sent to your Email!',
     data: result,
   });
 });
@@ -23,9 +23,20 @@ const register = catchAsync(async (req, res) => {
   });
 });
 
+const verifyOtp = catchAsync(async (req, res) => {
+  const result = await AuthServices.verifyOtp(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User logged in successfully!',
+    data: result,
+  });
+});
 
 export const AuthController = {
   loginUser,
-  register
+  register,
+  verifyOtp,
 
 };
