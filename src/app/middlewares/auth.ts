@@ -21,15 +21,17 @@ export const auth = (...requiredRoles: TUserRole[]) => {
       );
     }
 
+
     const decoded = jwt.verify(
       token,
       config.jwt_access_secret as string,
     ) as JwtPayload;
-    console.log(decoded);
+ 
 
-    const { role, auth, iat } = decoded;
 
-    const user = await User.findOne({ _id: auth });
+    const { role, id, iat } = decoded;
+
+    const user = await User.findOne({ _id: id });
 
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, 'This user is not found ');

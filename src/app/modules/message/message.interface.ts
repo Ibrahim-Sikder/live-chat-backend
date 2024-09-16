@@ -1,10 +1,9 @@
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
-export type TMessage =  {
-  sender: Types.ObjectId;
-  content: string;
-  chat: Types.ObjectId;
-  readBy: Types.ObjectId[];
+export interface TMessage {
+  senderId: Types.ObjectId;
+  receiverId: Types.ObjectId;
+  message: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

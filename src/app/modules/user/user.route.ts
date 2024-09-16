@@ -6,7 +6,7 @@ import { auth } from '../../middlewares/auth';
 const router = express.Router();
 
 
-router.get('/',auth('admin'), UserController.getAllUser);
+router.get('/', UserController.getAllUser);
 
 
 export const UserRoutes = router;
