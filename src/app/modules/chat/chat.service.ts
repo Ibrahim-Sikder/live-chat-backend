@@ -19,7 +19,7 @@ export const accessChat = async (userId: string, currentUserId: string) => {
       { users: { $elemMatch: { $eq: userId } } },
     ],
   })
-    .populate('users')
+    .populate('users','password')
     .populate('latestMessage');
 
   // Populate the sender of the latest message if it exists

@@ -12,3 +12,4 @@ const messageSchema = new Schema<TMessage>(
 );
 
 export const Message = model<TMessage>("Message", messageSchema);
+

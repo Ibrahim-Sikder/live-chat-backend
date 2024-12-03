@@ -21,7 +21,7 @@ async function main() {
     // Initialize Socket.io and attach it to the HTTP server
     io = new SocketIOServer(server, {
       cors: {
-        origin: "http://localhost:5173",
+        origin: "http://localhost:3000",
         methods: ["GET", "POST"],
       },
     });
@@ -39,6 +39,9 @@ async function main() {
         socket.join(room);
         console.log("user joiined room:" + room)
       })
+
+      socket.on('typing',(room)=>socket.in(room).emit('typing'));
+      socket.on('stop typing',(room)=>socket.in(room).emit('stop typing'))
 
       socket.on("new message",(newMessageRecieved)=>{
         let chat = newMessageRecieved.chat;

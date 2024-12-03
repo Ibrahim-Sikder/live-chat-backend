@@ -32,20 +32,13 @@ export const createMessage = async (data: { content: string; chatId: string; sen
   return message;
 };
 
+
 export const getAllMessages = async (chatId: string): Promise<TMessage[]> => {
   try {
     const messages = await Message.find({ chat: chatId })
-      .populate("sender", "name pic email")
-      .populate({
-        path:'chat',
-        populate:{
-          path:'latestMessage',
-          populate:{
-            path:'sender',
-            select:'name pic email'
-          }
-        }
-      });
+    .populate("sender", "name pic email")
+    .populate("chat")
+  
     
     return messages;
   } catch (error:any) {

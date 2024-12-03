@@ -7,15 +7,14 @@ import { protect } from '../../middlewares/auth';
 const router = express.Router();
 
 router.post(
-  '/',
-  validateRequest(chatValidations.ChatSchema),
+  '/', protect, validateRequest(chatValidations.ChatSchema),
   chatControllers.accessChat,
 );
 
-router.get('/', chatControllers.fetchChats);
+router.get('/',protect, chatControllers.fetchChats);
 
-router.post('/group', chatControllers.createGroupChat);
-router.put('/groupadd',  chatControllers.addToGroup);
-router.patch('/rename', chatControllers.renameGroupChat);
-router.put('/groupremove',  chatControllers.removeFromGroup);
+router.post('/group', protect,chatControllers.createGroupChat);
+router.put('/groupadd',protect,  chatControllers.addToGroup);
+router.patch('/rename', protect,chatControllers.renameGroupChat);
+router.put('/groupremove', protect, chatControllers.removeFromGroup);
 export const chatRoutes = router;
