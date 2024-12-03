@@ -2,6 +2,7 @@ import express from 'express';
 import { validateRequest } from '../../../utils/validateRequest';
 import { AuthValidation } from './auth.validation';
 import { AuthController } from './auth.controller';
+import { UserValidations } from '../user/user.validation';
 
 const router = express.Router();
 
@@ -10,21 +11,17 @@ router.post(
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.loginUser,
 );
-// router.post(
-//   '/change-password',
-//   auth(USER_ROLE.admin, USER_ROLE.student, USER_ROLE.teacher),
-//   validateRequest(AuthValidation.changePasswordValidationSchema),
-//   AuthController.changePassword,
-// );
 router.post(
-  '/forget-password',
-  validateRequest(AuthValidation.forgetPasswordValidationSchema),
-  AuthController.forgetPassword,
+  '/verify',
+  AuthController.verifyOtp,
 );
 router.post(
-  '/reset-password',
-  validateRequest(AuthValidation.resetPasswordValidationSchema),
-  AuthController.resetPassword,
+  '/register',
+  validateRequest(UserValidations.createUserValidationSchema),
+  AuthController.register,
 );
+
+
+
 
 export const authRoutes = router;

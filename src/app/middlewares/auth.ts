@@ -1,35 +1,55 @@
-import jwt from 'jsonwebtoken'
-import asyncHandler from 'express-async-handler'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+
+import { NextFunction, Request, Response } from 'express';
+
+import httpStatus from 'http-status';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import { catchAsync } from '../../utils/catchAsync';
+import { AppError } from '../error/AppError';
 import config from '../config';
 import { User } from '../modules/user/user.model';
+import { TUserRole } from '../modules/user/user.interface';
 
-
-export const protect = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-   
-      //decodes token id
-      const decoded = jwt.verify(token, config.jwt_secrete as string);
-
-      req.user = await User.findById(decoded.id).select("-password");
-
-      next();
-    } catch (error) {
-      res.status(401);
-      throw new Error("Not authorized, token failed");
+export const auth = (...requiredRoles: TUserRole[]) => {
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.headers.authorization;
+    if (!token) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        'You are not authorized! Please login to get access',
+      );
     }
-  }
-
-  if (!token) {
-    res.status(401);
-    throw new Error("Not authorized, no token");
-  }
-});
 
 
+    const decoded = jwt.verify(
+      token,
+      config.jwt_access_secret as string,
+    ) as JwtPayload;
+ 
+
+
+    const { role, id, iat } = decoded;
+
+    const user = await User.findOne({ _id: id });
+
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is not found ');
+    }
+
+    const isDeleted = user?.isDeleted;
+    if (isDeleted) {
+      throw new AppError(httpStatus.NOT_FOUND, 'This user is deleted!');
+    }
+
+    if (requiredRoles && !requiredRoles.includes(role)) {
+      throw new AppError(
+        httpStatus.UNAUTHORIZED,
+        'Your are not authorized user!',
+      );
+    }
+
+    req.user = decoded as JwtPayload;
+    next();
+  });
+};

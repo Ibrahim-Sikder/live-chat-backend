@@ -1,57 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import httpStatus from 'http-status';
-import { generateToken } from '../../../utils/GenerateToken';
 import { AppError } from '../../error/AppError';
 import { TUser } from './user.interface';
 import { User } from './user.model';
-
-export const createUser = async (payload: TUser) => {
-  const { name, email, password, pic } = payload;
-  if (!name || !email || !password) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Please enter all field');
-  }
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User already exits!');
-  }
-  const user = await User.create({
-    name,
-    email,
-    password,
-    pic,
-  });
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User createion failed!');
-  }
-
-  return {
-    _id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-    isAdmin: user.isAdmin,
-    pic: user.pic,
-    token: generateToken(user._id.toString()),
-  };
-};
-export const login = async (payload: TUser) => {
-  const { email, password } = payload;
-  const user = await User.findOne({ email });
-  if (user) {
-    return {
-      _id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      pic: user.pic,
-      token: generateToken(user._id.toString()),
-    };
-  }
-  else{
-    throw new AppError(httpStatus.NOT_FOUND,'Email or password do not match')
-  }
-};
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import config from '../../config';
 
 const getAllUsers = async (
   search: string | undefined,
@@ -70,8 +23,37 @@ const getAllUsers = async (
   return users;
 };
 
-export const UserServices = {
+const changePassword = async (payload: {
+  oldPassword: string;
+  newPassword: string;
+}) => {
+  const user = await User.findOne();
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  if (user.password !== payload.oldPassword) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Password do not matched!');
+  }
+
+  const result = User.findOneAndUpdate({
+    password: payload?.newPassword,
+  });
+  return result;
+};
+const refreshToken = async (token: string) => {
+  const decoded = jwt.verify(
+    token,
+    config.jwt_refresh_secret as string,
+  ) as JwtPayload;
+  console.log(decoded);
+
+  const { userId, iat } = decoded;
+  console.log(userId, iat);
+};
+
+export const UserService = {
+
+  changePassword,
+  refreshToken,
   getAllUsers,
-  createUser,
-  login,
 };
