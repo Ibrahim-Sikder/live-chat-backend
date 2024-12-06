@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
 import { AppError } from '../../error/AppError';
@@ -45,10 +46,10 @@ const refreshToken = async (token: string) => {
     token,
     config.jwt_refresh_secret as string,
   ) as JwtPayload;
-  console.log(decoded);
+ 
 
   const { userId, iat } = decoded;
-  console.log(userId, iat);
+
 };
 
 export const UserService = {

@@ -31,7 +31,7 @@ import { Message } from "./message.model";
   // Save the conversation and message in parallel
   await Promise.all([conversation.save(), newMessage.save()]);
 
-  // Notify the receiver via socket if they are connected
+
   // const receiverSocketId = getReceiverSocketId(receiverId);
   // if (receiverSocketId) {
   //   io.to(receiverSocketId).emit("newMessage", newMessage);

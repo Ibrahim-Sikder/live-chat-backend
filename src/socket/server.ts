@@ -1,41 +1,48 @@
-import { Server } from "socket.io";
-import http from "http";
-import express from "express";
+import { Server as SocketIOServer } from 'socket.io';
+import * as http from 'http';
+import app from '../app';
 
-const app = express();
-
-const server = http.createServer(app);
-const io = new Server(server, {
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: "http://localhost:3001",
-    methods: ["GET", "POST"],
-  },
+    origin: '*', // Adjust as needed
+    methods: ['GET', 'POST']
+  }
 });
 
-// realtime message code goes here
-export const getReceiverSocketId = (receiverId) => {
-  return users[receiverId];
-};
+// Track connected users
+const users: { [key: string]: string } = {};
 
-const users = {};
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
 
-// used to listen events on server side.
-io.on("connection", (socket) => {
-  console.log("a user connected", socket.id);
-  const userId = socket.handshake.query.userId;
+  // Store user socket mapping
+  const userId = socket.handshake.query.userId as string;
   if (userId) {
     users[userId] = socket.id;
-    console.log("Hello ", users);
+    io.emit('getOnlineUsers', Object.keys(users));
   }
-  // used to send the events to all connected users
-  io.emit("getOnlineUsers", Object.keys(users));
 
-  // used to listen client side events emitted by server side (server & client)
-  socket.on("disconnect", () => {
-    console.log("a user disconnected", socket.id);
-    delete users[userId];
-    io.emit("getOnlineUsers", Object.keys(users));
+  // Handle new messages
+  socket.on('new message', (messageData) => {
+    const receiverSocketId = users[messageData.receiverId];
+    
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('message received', messageData);
+    }
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    const disconnectedUserId = Object.keys(users).find(
+      (user) => users[user] === socket.id
+    );
+
+    if (disconnectedUserId) {
+      delete users[disconnectedUserId];
+      io.emit('getOnlineUsers', Object.keys(users));
+    }
   });
 });
 
-export { app, io, server };
+export { httpServer };

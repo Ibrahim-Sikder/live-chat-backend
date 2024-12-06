@@ -9,11 +9,14 @@ import { AppError } from "../../error/AppError";
 export const sendMessage = catchAsync(async (req, res) => {
   const { message } = req.body;
   const { id: receiverId } = req.params;
-  const senderId = req.user?._id || req.user?.id; 
-
+  const senderId = req.user?._id || req.user?.id;
 
   if (!senderId) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Sender ID is missing");
+  }
+
+  if (!message) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Message is required");
   }
 
   const newMessage = await messageServices.sendMessage(senderId, receiverId, message);
